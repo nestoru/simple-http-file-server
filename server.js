@@ -2,26 +2,51 @@
 
 /*
 server.js 
-- Simplest node http file server allowing serving custom mime types
-- Drop this file in a directory to be served via http
-- TODO: Allow storing files via http
+  Simplest node http file server allowing serving custom mime types
+
+1. Determine the directory to be served via http (publicDir)
+2. Determine where you will host this project locally (parentServerDir)
+3. Install:
+  # cd into your parentServerDir
+  git clone https://github.com/nestoru/simple-http-file-server.git
+  cd simple-http-file-server 
+  npm install
+4. Usage:
+  node server.js --publicDir <your publicDir | defaults to currentDir> \
+                    --port <your http port selection | defaults to 3000> \
+5. Default usage:
+  node server.js    
+  
+6. Custom usage:
+  node server.js --publicDir ~/Documents/ --port 4000
+
+TODO: Allow storing files via https using authentication.
 */
 
 var connect = require('connect'),
   serveStatic = require('serve-static'),
   serveIndex = require('serve-index'),
   path = require('path'),
-  mime = serveStatic.mime,
-  port = 3000,
-  publicDir = path.resolve('.');
+  minimist = require('minimist'),
+  mime = serveStatic.mime;
+
+var args = minimist(process.argv.slice(2), {
+  string: ['port', 'publicDir'],
+  default: {
+    port: 3000,
+    publicDir: '.'
+  }
+});
+
+var absolutePublicDir = path.resolve(args.publicDir);
 
 mime.define({
   'text/patch': ['patch']
 });
 
 var app = connect()
-  .use(serveStatic(publicDir))
-  .use(serveIndex(publicDir, {'icons': true, 'view': 'details'}))
-  .listen(port);
+  .use(serveStatic(absolutePublicDir))
+  .use(serveIndex(absolutePublicDir, {'icons': true, 'view': 'details'}))
+  .listen(args.port);
 
-console.log('Serving files from ' + publicDir + ' via http on port ' + port);
+console.log('Serving files from ' + absolutePublicDir + ' via http on port ' + args.port);
