@@ -1,0 +1,32 @@
+{
+  "name": "simple-http-file-server",
+  "version": "1.0.0",
+  "description": "Simplest node http file server",
+  "main": "server.js",
+  "scripts": {
+    "test": "node server.js",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nestoru/simple-http-file-server.git"
+  },
+  "keywords": [
+    "NodeJS",
+    "static",
+    "files",
+    "http",
+    "server"
+  ],
+  "author": "Nestor Urquiza",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nestoru/simple-http-file-server/issues"
+  },
+  "homepage": "https://github.com/nestoru/simple-http-file-server#readme",
+  "dependencies": {
+    "connect": "^3.4.0",
+    "serve-index": "^1.7.2",
+    "serve-static": "^1.10.0"
+  }
+}
