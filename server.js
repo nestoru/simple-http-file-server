@@ -41,7 +41,8 @@ var args = minimist(process.argv.slice(2), {
 var absolutePublicDir = path.resolve(args.publicDir);
 
 mime.define({
-  'text/patch': ['patch']
+  'text/patch': ['patch'],
+  'text/xml': ['wsdl']
 });
 
 var app = connect()
