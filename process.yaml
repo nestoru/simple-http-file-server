@@ -1,0 +1,6 @@
+apps:
+  - script : server.js
+    name: 'file-server'
+    instances: 0
+    exec_mode: cluster
+    merge_logs: true

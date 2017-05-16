@@ -20,6 +20,11 @@ server.js
 6. Custom usage:
   node server.js --publicDir ~/Documents/ --port 4000
 
+7. To make sure the server persists after reboot:
+nom install -g pm2
+pm2 start process.yaml
+pm2 save
+
 TODO: Allow storing files via https using authentication.
 */
 
