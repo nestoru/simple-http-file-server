@@ -4,3 +4,4 @@ apps:
     instances: 0
     exec_mode: cluster
     merge_logs: true
+    args: "--publicDir /opt/data/published"
