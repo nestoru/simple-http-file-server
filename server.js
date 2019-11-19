@@ -13,12 +13,14 @@ server.js
   npm install
 4. Usage:
   node server.js --publicDir <your publicDir | defaults to currentDir> \
-                    --port <your http port selection | defaults to 3000> \
+                 --port <your http port selection | defaults to 3000> \
+                 --ipWhitelistFilePath <your ip authorized list>
+
 5. Default usage:
   node server.js    
   
 6. Custom usage:
-  node server.js --publicDir ~/Documents/ --port 4000
+  node server.js --publicDir ~/Documents/ --port 4000 --ipWhitelistFilePath ~/ipwhitelist.txt
 
 7. To make sure the server persists after reboot:
 nom install -g pm2
@@ -28,18 +30,21 @@ pm2 save
 TODO: Allow storing files via https using authentication.
 */
 
-var connect = require('connect'),
+var express = require('express'),
   serveStatic = require('serve-static'),
   serveIndex = require('serve-index'),
   path = require('path'),
   minimist = require('minimist'),
+  ipWhitelist = require('ip-whitelist'),
+  morgan = require('morgan'),
   mime = serveStatic.mime;
 
 var args = minimist(process.argv.slice(2), {
-  string: ['port', 'publicDir'],
+  string: ['port', 'publicDir', 'ipWhitelistFilePath'],
   default: {
     port: 3000,
-    publicDir: '.'
+    publicDir: '.',
+    ipWhitelistFilePath: null
   }
 });
 
@@ -50,9 +55,29 @@ mime.define({
   'text/xml': ['wsdl']
 });
 
-var app = connect()
-  .use(serveStatic(absolutePublicDir))
-  .use(serveIndex(absolutePublicDir, {'icons': true, 'view': 'details'}))
-  .listen(args.port);
+var app = express();
 
-console.log('Serving files from ' + absolutePublicDir + ' via http on port ' + args.port);
+app.use(morgan(':method :url :status :remote-addr :res[content-length] - :response-time ms'));
+
+if(args.ipWhitelistFilePath != null) {
+  console.log(`Using ipWhitelistFilePath ${args.ipWhitelistFilePath}`);
+  app.use(ipWhitelist(ipWhitelist.file(args.ipWhitelistFilePath)));
+}
+
+app.use(serveStatic(absolutePublicDir, {
+  setHeaders: function(req, res) {
+    console.log("1" + req);
+  }
+}));
+
+app.use(serveIndex(absolutePublicDir, {'icons': true, 'view': 'details'}), function(req, res){
+  console.log("2" + req);
+});
+
+app.use(function(req, res){
+  console.log("3" + req);
+});
+
+app.listen(args.port, function(){
+  console.log('Serving files from ' + absolutePublicDir + ' via http on port ' + args.port);
+});
