@@ -27,7 +27,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "ip-whitelist": "^1.2.2",
-    "minimist": "^1.2.0",
+    "minimist": "^1.2.2",
     "morgan": "^1.9.1",
     "morgan-body": "^2.4.8",
     "serve-index": "^1.7.2",
