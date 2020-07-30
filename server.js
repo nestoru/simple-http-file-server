@@ -30,7 +30,10 @@ pm2 save
 TODO: Allow storing files via https using authentication.
 */
 
-var express = require('express'),
+// definitions
+const rateLimit = require("express-rate-limit");
+
+const express = require('express'),
   serveStatic = require('serve-static'),
   serveIndex = require('serve-index'),
   path = require('path'),
@@ -39,23 +42,71 @@ var express = require('express'),
   morgan = require('morgan'),
   mime = serveStatic.mime;
 
-var args = minimist(process.argv.slice(2), {
-  string: ['port', 'publicDir', 'ipWhitelistFilePath'],
+const args = minimist(process.argv.slice(2), {
+  string: ['port', 'publicDir', 'ipWhitelistFilePath', 'user', 'password', 'maxConnections', 'connectionsInterval'],
   default: {
     port: 3000,
     publicDir: '.',
-    ipWhitelistFilePath: null
+    ipWhitelistFilePath: null,
+    user: null,
+    password: null,
+    maxConnections: null,
+    connectionsInterval: null
   }
 });
 
-var absolutePublicDir = path.resolve(args.publicDir);
+const absolutePublicDir = path.resolve(args.publicDir);
 
 mime.define({
   'text/patch': ['patch'],
   'text/xml': ['wsdl']
 });
 
-var app = express();
+// functions
+function sendBasicAuthenticationChallenge(res) {
+  res.writeHead(401, { 'WWW-Authenticate': 'Basic realm="Basic Authentication"' })
+  res.end("Authentication required");
+}
+
+function authenticate(req, res) {
+  if(args.user && args.password) {
+    let authentication = req.headers.authorization;
+    if(!authentication) {
+      sendBasicAuthenticationChallenge(res);
+      return false;
+    } else {
+      authentication = authentication.replace(/^Basic/, '');
+      authentication = (new Buffer(authentication, 'base64')).toString('utf8');
+      const credentials = authentication.split(':');
+      if(credentials[0] != args.user || credentials[1] != args.password) {
+        sendBasicAuthenticationChallenge(res);
+        return false;
+      } else {
+        return true;
+      }
+    }
+  } else {
+    return true;
+  }
+}
+
+// main
+const app = express();
+
+if(args.maxConnections && args.connectionsInterval) {
+  console.log('Limiting connections to a max of ' + args.maxConnections + ' within ' + args.connectionsInterval + ' milliseconds');
+  const limiter = rateLimit({
+    windowMs: args.connectionsInterval,
+    max: args.maxConnections
+  });
+  app.use(limiter);
+}
+
+app.use(function(req, res, next){
+  if(authenticate(req, res)) {
+    next()
+  }
+});
 
 app.use(morgan(':method :url :status :remote-addr :res[content-length] - :response-time ms'));
 
@@ -66,16 +117,10 @@ if(args.ipWhitelistFilePath != null) {
 
 app.use(serveStatic(absolutePublicDir, {
   setHeaders: function(req, res) {
-    console.log("1" + req);
   }
 }));
 
 app.use(serveIndex(absolutePublicDir, {'icons': true, 'view': 'details'}), function(req, res){
-  console.log("2" + req);
-});
-
-app.use(function(req, res){
-  console.log("3" + req);
 });
 
 app.listen(args.port, function(){
